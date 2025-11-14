@@ -1,0 +1,8 @@
+nova_play_pass/
+    main.py
+    subscription_plans.py
+    database_manager.py
+    simulator.py
+    ui.py
+    init_db.py
+    logo.png   

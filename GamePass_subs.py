@@ -53,28 +53,94 @@ with st.expander("Step 1: Create Account", expanded=True):
             st.success("✅ Account created! Proceed to package selection below.")
 
 # --- Step 2: Package Selection ---
+# --- Step 2: Package Selection ---
 if st.session_state.account_created:
-    with st.expander("Step 2: Select Package", expanded=True):
-        packages = {"Essential": 9.99, "Premium": 14.99, "Ultimate": 29.99}
-        selected_package = st.radio("Select a package:", list(packages.keys()))
-        subscribe = st.button("Subscribe")
-        if subscribe:
-            payment_success = np.random.choice([True, False], p=[0.9, 0.1])
 
-            new_user = pd.DataFrame([{
-                "UserID": f"{st.session_state['name'].lower().replace(' ', '_')}_001",
-                "Name": st.session_state["name"],
-                "Email": st.session_state["email"],
-                "Package": selected_package,
-                "PaymentMethod": st.session_state["payment_method"],
-                "HoursPlayed": np.random.poisson(lam=25),
-                "Paid": payment_success
-            }])
+    st.subheader("🎁 Choose Your Package")
 
-            st.session_state.df_users = pd.concat([st.session_state.df_users, new_user], ignore_index=True)
-            st.session_state.package_selected = True
-            st.session_state.selected_package = selected_package
-            st.success(f"🎉 {selected_package} package subscribed successfully!")
+    # Updated package info with descriptions + icons + colors
+    packages = {
+        "Essential": {
+            "price": 9.99,
+            "desc": "✔️ Over 50 games on Xbox console and PC<br>"
+            "\n✔️ How to play online multiplayer on console<br>"
+            "\n✔️ Benefits for games like League of Legends and Call of Duty: Warzone <br>",
+            "color": "#4CAF50",
+            "icon": "🎯"
+        },
+        "Premium": {
+            "price": 14.99,
+            "desc": "✔️ Over 200 games on Xbox console and PC<br>"
+            "\n✔️ New games released by Xbox are added to the library within 12 months of launch<br>"
+            "\n✔️ Benefits for games like League of Legends and Call of Duty: Warzone<br>"
+            "\n✔️ How to play online multiplayer on console",
+            "color": "#2196F3",
+            "icon": "🚀"
+        },
+        "Ultimate": {
+            "price": 29.99,
+            "desc": "✔️ Over 50 games on Xbox console and PC<br>"
+            "\n✔️ How to play online multiplayer on console<br>"
+            "\n✔️ Benefits for games like League of Legends and Call of Duty: Warzone",
+            "color": "#9C27B0",
+            "icon": "👑"
+        }
+    }
+
+    col1, col2, col3 = st.columns(3)
+    cols = [col1, col2, col3]
+
+    # Visual Package Cards
+    for col, (pkg, info) in zip(cols, packages.items()):
+        with col:
+            st.markdown(
+                f"""
+                <div style="
+                    border: 2px solid {info['color']};
+                    border-radius: 16px;
+                    padding: 20px;
+                    text-align: center;
+                    background: white;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+                    transition: 0.3s ease;
+                "
+                onmouseover="this.style.transform='scale(1.03)'; 
+                             this.style.boxShadow='0 6px 16px rgba(0,0,0,0.25)';"
+                onmouseout="this.style.transform='scale(1)'; 
+                            this.style.boxShadow='0 4px 10px rgba(0,0,0,0.15)';"
+                >
+                    <div style="font-size: 40px;">{info['icon']}</div>
+                    <h2 style="color:{info['color']}; margin-bottom: 10px;">{pkg}</h2>
+                    <h1 style="margin-top:0; font-size: 32px; color:#333;">${info['price']:.2f}</h1>
+                    <p style="font-size:15px; color:#555;">{info['desc']}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+    st.write("### Select your package:")
+    selected_package = st.radio("", list(packages.keys()))
+
+    if st.button("Subscribe Now"):
+        payment_success = np.random.choice([True, False], p=[0.9, 0.1])
+
+        new_user = pd.DataFrame([{
+            "UserID": f"{st.session_state['name'].lower().replace(' ', '_')}_001",
+            "Name": st.session_state["name"],
+            "Email": st.session_state["email"],
+            "Package": selected_package,
+            "PaymentMethod": st.session_state["payment_method"],
+            "HoursPlayed": np.random.poisson(lam=25),
+            "Paid": payment_success
+        }])
+
+        st.session_state.df_users = pd.concat(
+            [st.session_state.df_users, new_user], ignore_index=True
+        )
+        st.session_state.package_selected = True
+
+        st.success(f"🎉 {selected_package} package subscribed successfully!")
+
 
 # --- Step 3: Boss Report / Simulation ---
 if st.session_state.package_selected:

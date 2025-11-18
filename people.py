@@ -49,3 +49,4 @@ class PeopleGenerator:
         }
 
         return users
+#Studie Deutsch

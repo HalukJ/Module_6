@@ -1,2 +1,2 @@
-name = nput("Enter your name: ")
-rint("Hello", name)
+name = input("Enter your name: ")
+print("Hello", name)

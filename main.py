@@ -1,3 +1,4 @@
+import user
 from people import PeopleGenerator
 from Monthly import MonthlyChanges
 

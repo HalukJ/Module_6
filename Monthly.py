@@ -1,91 +1,86 @@
-import random
 import csv
+import random
+from typing import Dict, List, Optional, Sequence
+
 from Dropout import Dropouts
 
-class MonthlyChanges:
-    def __init__(self, users: dict):
 
+class MonthlyChanges:
+    def __init__(self, users: Dict[str, List], plan_names: Optional[Sequence[str]] = None):
         self.users = users
+        self.plan_names = list(plan_names) if plan_names is not None else list(users.keys())
         self.month_names = [
-            "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
         ]
 
-    def migrate(self, source_group, dest_group, percent):
+    def migrate(self, source_group: str, dest_group: str, percent: float) -> None:
         """Move a percentage of people from one group to another."""
         src_list = self.users[source_group]
         amount = int(len(src_list) * percent)
         if amount == 0:
-            return  # nothing to move
+            return
 
-        # Rastgele birini seç
         to_move = random.sample(src_list, amount)
-
-        # yerlerini değiştir
         for user in to_move:
             src_list.remove(user)
             self.users[dest_group].append(user)
 
-    def apply_monthly_changes(self):
-       
+    @staticmethod
+    def _display_user(user) -> str:
+        if hasattr(user, "full_name"):
+            return user.full_name
+        if hasattr(user, "gamer_tag"):
+            return user.gamer_tag
+        return str(user)
 
-        # İlk hallerini CSV'ye kaydediyoruz
+    def apply_monthly_changes(self) -> None:
+        """Simulate churn/migrations for one calendar year and write the CSV."""
         initial_users = []
+        initial_counts = {}
         for group, user_list in self.users.items():
+            initial_counts[group] = len(user_list)
             for user in user_list:
                 initial_users.append((user, group))
 
-        drop = Dropouts(self.users)
+        drop = Dropouts(self.users, plan_names=self.plan_names)
 
         with open("monthly_changes.csv", "w", newline="") as file:
             writer = csv.writer(file)
-            # Header for monthly summary
-            writer.writerow(["Month", "Economic", "Moderate", "Luxurious"])
+            writer.writerow(["Month", *self.plan_names])
 
             for month in self.month_names:
-                # Each group loses 1–5% to OTHER groups
-                for group in ["Economic", "moderate", "luxurious"]:
+                for group in self.plan_names:
                     percent = random.uniform(0.01, 0.05)
-                    destination = random.choice(
-                        [g for g in ["Economic", "moderate", "luxurious"] if g != group]
-                    )
+                    destination_candidates = [g for g in self.plan_names if g != group]
+                    destination = random.choice(destination_candidates)
                     self.migrate(group, destination, percent)
 
-                # Apply dropouts
                 dropped = drop.apply_dropouts()
 
-                # Write monthly summary to CSV
-                writer.writerow([
-                    month,
-                    len(self.users["Economic"]),
-                    len(self.users["moderate"]),
-                    len(self.users["luxurious"])
-                ])
+                writer.writerow([month, *[len(self.users[g]) for g in self.plan_names]])
 
-                # Print short summary to terminal
                 print(f"\n{month}:")
-                print("  Economic :", len(self.users['Economic']))
-                print("  Moderate :", len(self.users['moderate']))
-                print("  Luxurious:", len(self.users['luxurious']))
-
-                # Print dropouts
+                for group in self.plan_names:
+                    print(f"  {group:<9}: {len(self.users[group])}")
                 drop.print_dropouts(dropped, month)
-                 # kullanıcı sayısı
-                writer.writerow([]) 
-                writer.writerow(["Initial Number of Users per Plan"])
-                for group, user_list in self.users.items():
-                    writer.writerow([group, len(user_list)])
 
+            writer.writerow([])
+            writer.writerow(["Initial Number of Users per Plan"])
+            for group in self.plan_names:
+                writer.writerow([group, initial_counts[group]])
 
-            # plana göre kişiler belki hesapları tekrar eklediğimizde ordakileri değiştirebileceğimizden tutuyorum
-            writer.writerow([]) 
+            writer.writerow([])
             writer.writerow(["Initial Users", "Plan"])
             for user, plan in initial_users:
-                writer.writerow([user, plan])
-            writer.writerow([" MM  MM"])
-            writer.writerow(["M   M   M"])
-            writer.writerow([" M    M"])
-            writer.writerow(["   MM"])
-
-
-         
+                writer.writerow([self._display_user(user), plan])

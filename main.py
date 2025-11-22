@@ -1,28 +1,32 @@
-import user
-from people import PeopleGenerator
 from Monthly import MonthlyChanges
+from people import PeopleGenerator
+
 
 def main():
-   
     total_users = 1000  # <-- you can change this anytime
-    
-    # -------- GENERATE PEOPLE --------
-    print("\nGenerating users...")
+
+    print("\nGenerating Game Pass subscribers...")
     generator = PeopleGenerator(total_users)
     users = generator.generate()
 
-    print("Initial distribution:")
-    print("  Economic :", len(users["Economic"]))
-    print("  Moderate :", len(users["moderate"]))
-    print("  Luxurious:", len(users["luxurious"]))
+    print("\nInitial distribution:")
+    for plan in generator.plan_names:
+        print(f"  {plan:<9}: {len(users[plan])}")
 
-    # -------- APPLY MONTHLY CHANGES --------
+    print("\nPlan overview:")
+    for plan in generator.plan_names:
+        info = generator.plan_catalog[plan]
+        perks = ", ".join(info["perks"])
+        devices = "/".join(info["devices"])
+        print(f"  {plan:<9} ${info['price']:.2f} - {info['description']} ({devices})")
+        print(f"             Perks: {perks}")
+
     print("\nStarting monthly simulation...")
-    monthly = MonthlyChanges(users)
+    monthly = MonthlyChanges(users, plan_names=generator.plan_names)
     monthly.apply_monthly_changes()
 
-    print()
-    print("Saved to:  monthly_changes.csv")
+    print("\nSaved to: monthly_changes.csv")
+
 
 if __name__ == "__main__":
     main()

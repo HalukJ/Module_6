@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MUDTPass Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <nav class="hero__nav">
+        <div class="logo">MUDT<span>Pass</span></div>
+        <ul>
+          <li><a href="#plans">Plans</a></li>
+          <li><a href="#comparison">Compare</a></li>
+          <li><a href="#community">Community</a></li>
+          <li><a href="#perks">Perks</a></li>
+        </ul>
+        <button class="cta">Sign In</button>
+      </nav>
+      <div class="hero__content">
+        <p class="eyebrow">All the games, everywhere you play</p>
+        <h1>Welcome to MUDTPass</h1>
+        <p class="lead">
+          Stream blockbusters on the go, dominate the PC leaderboards, or unlock Xbox online
+          multiplayer. Pick the ecosystem that fits the way you play.
+        </p>
+        <div class="hero__actions">
+          <a class="cta primary" href="#plans">Explore plans</a>
+          <a class="cta ghost" href="#comparison">See differences</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="plans" id="plans">
+        <header>
+          <p class="eyebrow">Memberships</p>
+          <h2>Find a plan tailored to your play style</h2>
+        </header>
+        <div class="plan-grid" id="planGrid"></div>
+      </section>
+
+      <section class="comparison" id="comparison">
+        <div class="comparison__header">
+          <div>
+            <p class="eyebrow">Live comparison</p>
+            <h2>Contrast each plan instantly</h2>
+          </div>
+          <div class="plan-picker">
+            <label for="planSelect">Focus on a plan</label>
+            <select id="planSelect"></select>
+          </div>
+        </div>
+
+        <div class="comparison__body">
+          <div class="selected-plan">
+            <h3 id="selectedPlanName"></h3>
+            <p id="selectedPlanTagline"></p>
+            <div class="selected-plan__price" id="selectedPlanPrice"></div>
+            <ul id="selectedPlanPerks"></ul>
+            <div class="selected-plan__stats" id="selectedPlanStats"></div>
+          </div>
+          <div class="difference-panel">
+            <h3>What makes it stand out</h3>
+            <ul id="differenceList"></ul>
+            <p class="muted">
+              Differences are calculated against other MUDTPass memberships in real time.
+            </p>
+          </div>
+          <div class="members-panel">
+            <h3>Players currently on this plan</h3>
+            <ul id="selectedPlanMembers"></ul>
+            <p class="muted">
+              Live sample pulled from the MUDTPass database. Refresh to meet more players.
+            </p>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="comparison-table" id="comparisonTable">
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>Core</th>
+                <th>PC</th>
+                <th>Ultimate</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="experience hidden" id="experience">
+        <header>
+          <p class="eyebrow">Your MUDTPass journey</p>
+          <h2>Welcome to the community you selected</h2>
+        </header>
+        <form class="subscribe-form" id="subscribeForm">
+          <label for="subscribeName">Reserve your seat</label>
+          <div class="subscribe-form__controls">
+            <input
+              type="text"
+              id="subscribeName"
+              name="subscribeName"
+              placeholder="Enter your gamer name"
+              autocomplete="off"
+              required
+            />
+            <button type="submit" class="cta primary" id="subscribeButton" disabled>
+              Subscribe
+            </button>
+          </div>
+          <p class="subscribe-status status-info" id="subscribeStatus">
+            Pick a plan to enable subscriptions.
+          </p>
+        </form>
+        <div class="experience__grid">
+          <article class="experience-card">
+            <h3 id="experienceWelcome">Choose a plan to begin</h3>
+            <p id="experienceCopy">
+              Tap one of the memberships above to get a personalized welcome message and learn
+              exactly what opens up after subscribing.
+            </p>
+            <ul id="experienceActions"></ul>
+          </article>
+          <article class="experience-card">
+            <h3>What you can do right now</h3>
+            <ul id="experienceCapabilities"></ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="analytics" id="analytics">
+        <header>
+          <p class="eyebrow">Tester dashboard</p>
+          <h2>Live subscription telemetry</h2>
+          <p class="lead">
+            Peek behind the curtain to see how each plan is performing. Counts refresh every time
+            the database seeds the next batch of 1,000 simulated members.
+          </p>
+        </header>
+        <div class="analytics__grid">
+          <article class="chart-card">
+            <canvas id="planChart" width="420" height="240"></canvas>
+            <p class="muted">
+              Percentages reflect <span id="analyticsTotal">0</span> total members. Each bar is
+              computed via a simple proportion formula:
+              <code>plan_count / total_members * 100</code>.
+            </p>
+          </article>
+          <article class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Plan</th>
+                  <th>Members</th>
+                  <th>Percent</th>
+                </tr>
+              </thead>
+              <tbody id="analyticsTableBody"></tbody>
+            </table>
+            <p class="muted">
+              Use this panel to validate onboarding flows or to sanity check migrations between
+              plans after monthly churn simulations.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="community" id="community">
+        <header>
+          <p class="eyebrow">MUDTPass community</p>
+          <h2>See how 1000 real members are distributed</h2>
+        </header>
+        <div class="community__grid">
+          <div class="stat-card">
+            <h3>Plan breakdown</h3>
+            <ul id="communityStats"></ul>
+          </div>
+          <div class="stat-card">
+            <h3>How to try it</h3>
+            <ol>
+              <li>Install backend requirements: <code>pip install flask</code></li>
+              <li>Seed and launch API: <code>python server.py</code></li>
+              <li>Open this page at <code>http://localhost:5000</code> to browse live data.</li>
+            </ol>
+            <p class="muted">All plan and user cards update directly from the SQLite database.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="perks" id="perks">
+        <header>
+          <p class="eyebrow">Why players switch</p>
+          <h2>Legendary perks across every tier</h2>
+        </header>
+        <div class="perk-grid">
+          <article>
+            <h3>Day-one titles</h3>
+            <p>
+              Experience new Xbox Game Studios releases the moment they drop. Ultimate players even
+              stream them from the cloud.
+            </p>
+          </article>
+          <article>
+            <h3>EA Play integration</h3>
+            <p>
+              Dive into the EA back catalog and unlock in-game rewards on PC and Ultimate plans.
+            </p>
+          </article>
+          <article>
+            <h3>Member rewards</h3>
+            <p>
+              Earn skins, in-game boosts, and store discounts just for staying subscribed. Rewards
+              scale with your plan level.
+            </p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <small>MUDTPass simulation interface &middot; Crafted for Module 6</small>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,5 +1,8 @@
 def divide (a,b):
-    return a/b
+    if b == 0 :
+        return "Second number can't be 0"
+    else:
+        return a/b
 
 
 def scoreDived ():

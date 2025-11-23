@@ -30,6 +30,19 @@ def plans():
     return jsonify(db.get_plan_catalog())
 
 
+@app.post("/api/plans/favorite")
+def favorite_plan():
+    payload = request.get_json(silent=True) or {}
+    plan = payload.get("plan")
+    if not plan:
+        return jsonify({"error": "Plan is required."}), 400
+    try:
+        catalog = db.set_favorite_plan(plan)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify(catalog)
+
+
 @app.route("/api/users/summary")
 def user_summary():
     return jsonify(db.get_user_summary())

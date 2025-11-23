@@ -2,7 +2,7 @@ import json
 import random
 import sqlite3
 from pathlib import Path
-from typing import Dict, List, Sequence
+from typing import Dict, List, Optional, Sequence
 
 from people import GamePassUser, PeopleGenerator
 
@@ -30,7 +30,8 @@ class GamePassDatabase:
                     devices TEXT NOT NULL,
                     perks TEXT NOT NULL,
                     features TEXT NOT NULL,
-                    hours_range TEXT NOT NULL
+                    hours_range TEXT NOT NULL,
+                    is_favorite INTEGER NOT NULL DEFAULT 0
                 )
                 """
             )
@@ -49,6 +50,8 @@ class GamePassDatabase:
                 )
                 """
             )
+        self._ensure_favorite_column()
+        self._ensure_default_favorite()
 
     def seed_if_empty(self, generator: PeopleGenerator) -> None:
         if self.count_users() > 0:
@@ -72,8 +75,8 @@ class GamePassDatabase:
                     """
                     INSERT INTO plans (
                         name, display_order, price, tagline, description, best_for,
-                        devices, perks, features, hours_range
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        devices, perks, features, hours_range, is_favorite
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         plan,
@@ -86,6 +89,7 @@ class GamePassDatabase:
                         json.dumps(info["perks"]),
                         json.dumps(info["features"]),
                         json.dumps(info["hours_range"]),
+                        1 if order == 0 else 0,
                     ),
                 )
 
@@ -132,6 +136,7 @@ class GamePassDatabase:
                 "perks": json.loads(row["perks"]),
                 "features": json.loads(row["features"]),
                 "hours_range": tuple(json.loads(row["hours_range"])),
+                "is_favorite": bool(row["is_favorite"]),
             }
         return {"order": order, "plans": plan_data}
 
@@ -180,6 +185,29 @@ class GamePassDatabase:
             summary[plan]["top_devices"] = [row["preferred_device"] for row in devices]
 
         return summary
+
+    def get_favorite_plan(self) -> Optional[str]:
+        row = self.conn.execute(
+            "SELECT name FROM plans WHERE is_favorite = 1 LIMIT 1"
+        ).fetchone()
+        return row["name"] if row else None
+
+    def set_favorite_plan(self, plan: str) -> Dict:
+        plan_row = self.conn.execute(
+            "SELECT name FROM plans WHERE LOWER(name) = LOWER(?)",
+            (plan,),
+        ).fetchone()
+        if not plan_row:
+            raise ValueError("Unknown plan.")
+
+        with self.conn:
+            self.conn.execute("UPDATE plans SET is_favorite = 0")
+            self.conn.execute(
+                "UPDATE plans SET is_favorite = 1 WHERE LOWER(name) = LOWER(?)",
+                (plan,),
+            )
+
+        return self.get_plan_catalog()
 
     def get_users_by_plan(self, plan: str, limit: int = 8) -> List[Dict]:
         rows = self.conn.execute(
@@ -258,6 +286,37 @@ class GamePassDatabase:
         suffix = self._random.choice(PeopleGenerator.TAG_SUFFIXES)
         digits = self._random.randint(10, 999)
         return f"{prefix}{suffix}{digits}"
+
+    def _ensure_favorite_column(self) -> None:
+        """Add the favorite flag to plans if an older DB is present."""
+        cols = {
+            row["name"]
+            for row in self.conn.execute("PRAGMA table_info(plans)").fetchall()
+        }
+        if "is_favorite" in cols:
+            return
+        with self.conn:
+            self.conn.execute(
+                "ALTER TABLE plans ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0"
+            )
+
+    def _ensure_default_favorite(self) -> None:
+        """Make sure at least one plan is marked favorite for UX defaults."""
+        favorite_count = self.conn.execute(
+            "SELECT COUNT(*) AS total FROM plans WHERE is_favorite = 1"
+        ).fetchone()
+        if favorite_count and favorite_count["total"]:
+            return
+        top_plan = self.conn.execute(
+            "SELECT name FROM plans ORDER BY display_order ASC LIMIT 1"
+        ).fetchone()
+        if not top_plan:
+            return
+        with self.conn:
+            self.conn.execute("UPDATE plans SET is_favorite = 0")
+            self.conn.execute(
+                "UPDATE plans SET is_favorite = 1 WHERE name = ?", (top_plan["name"],)
+            )
 
 
 def seed_database(db_path: str = "mudtpass.db", total_users: int = 1000) -> None:

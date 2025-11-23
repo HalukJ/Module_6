@@ -43,6 +43,7 @@
         <header>
           <p class="eyebrow">Memberships</p>
           <h2>Find a plan tailored to your play style</h2>
+          <p class="muted">Tap the star on any card to mark it as your favorite.</p>
         </header>
         <div class="plan-grid" id="planGrid"></div>
       </section>
@@ -154,6 +155,13 @@
               Percentages reflect <span id="analyticsTotal">0</span> total members. Each bar is
               computed via a simple proportion formula:
               <code>plan_count / total_members * 100</code>.
+            </p>
+          </article>
+          <article class="chart-card">
+            <canvas id="hoursChart" width="420" height="240"></canvas>
+            <p class="muted">
+              Total monthly playtime per plan (members × avg hours). Use this to gauge which tiers
+              attract the longest sessions.
             </p>
           </article>
           <article class="table-card">

@@ -15,6 +15,7 @@ const fallbackPlanPayload = {
   plans: {
     Core: {
       name: "Core",
+      is_favorite: false,
       price: 9.99,
       tagline: "Essential console multiplayer",
       description: "Console multiplayer, rotating library",
@@ -34,6 +35,7 @@ const fallbackPlanPayload = {
     },
     PC: {
       name: "PC",
+      is_favorite: false,
       price: 10.99,
       tagline: "Unlimited PC library",
       description: "Large PC catalog + EA Play",
@@ -53,6 +55,7 @@ const fallbackPlanPayload = {
     },
     Ultimate: {
       name: "Ultimate",
+      is_favorite: true,
       price: 16.99,
       tagline: "All devices. All perks.",
       description: "Console, PC and cloud streaming",
@@ -95,6 +98,7 @@ let userSummary = {};
 let totalMembers = 0;
 let selectedPlanKey = null;
 let apiAvailable = true;
+let favoritePlanKey = null;
 
 const planGrid = document.querySelector("#planGrid");
 const planSelect = document.querySelector("#planSelect");
@@ -113,6 +117,7 @@ const experienceCopy = document.querySelector("#experienceCopy");
 const experienceActions = document.querySelector("#experienceActions");
 const experienceCapabilities = document.querySelector("#experienceCapabilities");
 const planChartCanvas = document.querySelector("#planChart");
+const hoursChartCanvas = document.querySelector("#hoursChart");
 const analyticsTableBody = document.querySelector("#analyticsTableBody");
 const analyticsTotal = document.querySelector("#analyticsTotal");
 const subscribeForm = document.querySelector("#subscribeForm");
@@ -129,28 +134,40 @@ async function fetchJSON(url) {
 }
 
 function setPlanData(payload) {
-  planData = payload.plans;
-  planOrder = payload.order;
+  planData = payload.plans || {};
+  planOrder = payload.order || Object.keys(planData);
+  favoritePlanKey =
+    planOrder.find((key) => planData[key] && planData[key].is_favorite) || null;
 }
 
 function renderPlanGrid() {
   planGrid.innerHTML = "";
   planOrder.forEach((key) => {
     const plan = planData[key];
+    const isFavorite = !!plan.is_favorite;
+    const favoriteLabel = isFavorite ? "★ Favorite plan" : "☆ Mark favorite";
     const card = document.createElement("article");
-    card.className = "plan-card";
+    card.className = `plan-card${isFavorite ? " favorite" : ""}`;
     card.dataset.plan = key;
     card.innerHTML = `
-      <p class="eyebrow">${plan.tagline}</p>
+      <div class="plan-card__header">
+        <p class="eyebrow">${plan.tagline}</p>
+        <button class="favorite-toggle" type="button" data-plan-favorite="${key}" aria-pressed="${isFavorite}">
+          ${favoriteLabel}
+        </button>
+      </div>
       <h3>${plan.name}</h3>
-      <p>${plan.description}</p>
+      <p class="plan-card__desc">${plan.description}</p>
       <div class="plan-card__price">$${plan.price.toFixed(2)}<span>/month</span></div>
       <ul>
         <li>Best for: ${plan.best_for}</li>
         <li>Devices: ${plan.devices.join(", ")}</li>
         <li>Typical playtime: ${plan.hours_range[0]}-${plan.hours_range[1]} hrs/month</li>
       </ul>
-      <button class="cta primary" data-plan-select="${key}">Choose ${plan.name}</button>
+      <div class="plan-card__footer">
+        <button class="cta primary" data-plan-select="${key}">Choose ${plan.name}</button>
+        ${isFavorite ? '<span class="favorite-chip">Favorite</span>' : ""}
+      </div>
     `;
     planGrid.appendChild(card);
   });
@@ -160,9 +177,10 @@ function populateSelect() {
   planSelect.innerHTML = "";
   planOrder.forEach((key) => {
     const plan = planData[key];
+    const favoriteSuffix = plan.is_favorite ? " ★" : "";
     const option = document.createElement("option");
     option.value = key;
-    option.textContent = `${plan.name} - $${plan.price.toFixed(2)}/mo`;
+    option.textContent = `${plan.name} - $${plan.price.toFixed(2)}/mo${favoriteSuffix}`;
     planSelect.appendChild(option);
   });
 }
@@ -175,7 +193,7 @@ function renderComparisonTable() {
       <th scope="row">${feature.label}</th>
       ${planOrder
         .map((plan) => {
-          const value = planData[plan].features[feature.key];
+          const value = planData[plan]?.features?.[feature.key];
           return `<td data-value="${value}">${value ? "Included" : "—"}</td>`;
         })
         .join("")}
@@ -186,6 +204,7 @@ function renderComparisonTable() {
 
 function computeDifferences(planKey) {
   const plan = planData[planKey];
+  if (!plan) return [];
   const others = planOrder.filter((key) => key !== planKey);
   const diffs = [];
 
@@ -372,6 +391,76 @@ function renderPlanChart() {
   });
 }
 
+function renderHoursChart() {
+  if (!hoursChartCanvas || !hoursChartCanvas.getContext) return;
+  const ctx = hoursChartCanvas.getContext("2d");
+  const width = hoursChartCanvas.width;
+  const height = hoursChartCanvas.height;
+  ctx.clearRect(0, 0, width, height);
+
+  if (!totalMembers) {
+    ctx.fillStyle = "#9ba7b4";
+    ctx.font = "500 16px 'Space Grotesk', sans-serif";
+    ctx.fillText("Start the backend to plot playtime hours.", 20, height / 2);
+    return;
+  }
+
+  const rows = planOrder.map((plan) => {
+    const stats = userSummary[plan] || { count: 0, avg_hours: 0 };
+    const count = stats.count || 0;
+    const avg = stats.avg_hours || 0;
+    const hours = Math.round(count * avg);
+    return { plan, count, avg, hours };
+  });
+
+  const maxHours = Math.max(...rows.map((row) => row.hours), 1);
+  const padding = 40;
+  const plotWidth = width - padding * 2;
+  const plotHeight = height - padding * 2;
+
+  // Axes
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding, padding);
+  ctx.lineTo(padding, padding + plotHeight);
+  ctx.lineTo(padding + plotWidth, padding + plotHeight);
+  ctx.stroke();
+
+  // Line path
+  ctx.strokeStyle = chartColors[0];
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  rows.forEach((row, index) => {
+    const x = padding + (index / Math.max(rows.length - 1, 1)) * plotWidth;
+    const y = padding + plotHeight - (row.hours / maxHours) * plotHeight;
+    if (index === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+  ctx.stroke();
+
+  // Points + labels
+  ctx.fillStyle = chartColors[1];
+  ctx.font = "500 13px 'Space Grotesk', sans-serif";
+  rows.forEach((row, index) => {
+    const x = padding + (index / Math.max(rows.length - 1, 1)) * plotWidth;
+    const y = padding + plotHeight - (row.hours / maxHours) * plotHeight;
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#f5f8fa";
+    ctx.textAlign = "center";
+    ctx.fillText(row.plan, x, padding + plotHeight + 16);
+    ctx.textAlign = "left";
+    ctx.fillText(`${row.hours.toLocaleString()} hrs`, x + 8, y - 8);
+    ctx.fillStyle = chartColors[1];
+  });
+}
+
 function renderAnalytics() {
   totalMembers = planOrder.reduce(
     (total, plan) => total + (userSummary[plan] ? userSummary[plan].count : 0),
@@ -380,6 +469,7 @@ function renderAnalytics() {
   renderCommunityStats();
   renderAnalyticsTable();
   renderPlanChart();
+  renderHoursChart();
 }
 
 async function handleSubscribe(event) {
@@ -452,10 +542,13 @@ async function fetchPlanMembers(planKey) {
 
 function selectPlan(planKey) {
   const plan = planData[planKey];
+  if (!plan) return;
   selectedPlanKey = planKey;
   planSelect.value = planKey;
-  selectedPlanName.textContent = `${plan.name} membership`;
-  selectedPlanTagline.textContent = `${plan.tagline} · ${plan.description} ${plan.best_for}`;
+  selectedPlanName.innerHTML = `${plan.name} membership ${
+    plan.is_favorite ? '<span class="favorite-chip favorite-chip--inline">Favorite</span>' : ""
+  }`;
+  selectedPlanTagline.textContent = `${plan.tagline} • ${plan.description} ${plan.best_for}`;
   selectedPlanPrice.textContent = `$${plan.price.toFixed(2)}/month`;
   selectedPlanPerks.innerHTML = plan.perks.map((perk) => `<li>${perk}</li>`).join("");
 
@@ -467,8 +560,49 @@ function selectPlan(planKey) {
   fetchPlanMembers(planKey);
 }
 
+async function markFavorite(planKey) {
+  if (!planData[planKey]) return;
+  favoritePlanKey = planKey;
+  try {
+    if (!apiAvailable) {
+      throw new Error("Backend is offline");
+    }
+    const response = await fetch("/api/plans/favorite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: planKey }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Unable to set favorite.");
+    }
+    setPlanData(data);
+  } catch (error) {
+    Object.keys(planData).forEach((key) => {
+      planData[key].is_favorite = key === planKey;
+    });
+    console.warn("Favorite set locally:", error);
+  }
+
+  renderPlanGrid();
+  renderComparisonTable();
+  renderAnalytics();
+  populateSelect();
+  const targetPlan = selectedPlanKey || favoritePlanKey || planOrder[0];
+  if (targetPlan) {
+    selectPlan(targetPlan);
+  }
+}
+
 function attachEvents() {
   planGrid.addEventListener("click", (event) => {
+    const favoriteButton = event.target.closest("[data-plan-favorite]");
+    if (favoriteButton) {
+      markFavorite(favoriteButton.dataset.planFavorite);
+      favoriteButton.blur();
+      return;
+    }
+
     const button = event.target.closest("[data-plan-select]");
     if (!button) return;
     selectPlan(button.dataset.planSelect);
@@ -505,7 +639,10 @@ async function init() {
   renderComparisonTable();
   renderAnalytics();
   attachEvents();
-  selectPlan(planOrder[0]);
+  const initialPlan = favoritePlanKey || planOrder[0];
+  if (initialPlan) {
+    selectPlan(initialPlan);
+  }
   updateSubscribeUI();
 }
 

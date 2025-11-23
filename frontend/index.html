@@ -19,8 +19,6 @@
         <ul>
           <li><a href="#plans">Plans</a></li>
           <li><a href="#comparison">Compare</a></li>
-          <li><a href="#community">Community</a></li>
-          <li><a href="#perks">Perks</a></li>
         </ul>
         <button class="cta">Sign In</button>
       </nav>
@@ -43,7 +41,7 @@
         <header>
           <p class="eyebrow">Memberships</p>
           <h2>Find a plan tailored to your play style</h2>
-          <p class="muted">Tap the star on any card to mark it as your favorite.</p>
+          <p class="muted">We automatically highlight the plan most players are choosing right now.</p>
         </header>
         <div class="plan-grid" id="planGrid"></div>
       </section>
@@ -142,27 +140,23 @@
       <section class="analytics" id="analytics">
         <header>
           <p class="eyebrow">Tester dashboard</p>
-          <h2>Live subscription telemetry</h2>
-          <p class="lead">
-            Peek behind the curtain to see how each plan is performing. Counts refresh every time
-            the database seeds the next batch of 1,000 simulated members.
-          </p>
-        </header>
-        <div class="analytics__grid">
-          <article class="chart-card">
-            <canvas id="planChart" width="420" height="240"></canvas>
-            <p class="muted">
-              Percentages reflect <span id="analyticsTotal">0</span> total members. Each bar is
-              computed via a simple proportion formula:
-              <code>plan_count / total_members * 100</code>.
-            </p>
+        <h2>Live subscription telemetry</h2>
+        <p class="lead">
+          Peek behind the curtain to see how each plan is performing. Counts refresh every time
+          the database seeds the next batch of 1,000 simulated members.
+        </p>
+      </header>
+      <div class="analytics__grid">
+        <article class="chart-card">
+          <h3>12-month profit by plan</h3>
+          <canvas id="profitChart" width="1640" height="720"></canvas>
+          <div class="chart-legend" id="profitLegend"></div>
+        </article>
+        <article class="chart-card">
+          <canvas id="planChart" width="1640" height="720"></canvas>
           </article>
           <article class="chart-card">
-            <canvas id="hoursChart" width="420" height="240"></canvas>
-            <p class="muted">
-              Total monthly playtime per plan (members × avg hours). Use this to gauge which tiers
-              attract the longest sessions.
-            </p>
+            <canvas id="hoursChart" width="1640" height="720"></canvas>
           </article>
           <article class="table-card">
             <table>
@@ -178,57 +172,6 @@
             <p class="muted">
               Use this panel to validate onboarding flows or to sanity check migrations between
               plans after monthly churn simulations.
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <section class="community" id="community">
-        <header>
-          <p class="eyebrow">MUDTPass community</p>
-          <h2>See how 1000 real members are distributed</h2>
-        </header>
-        <div class="community__grid">
-          <div class="stat-card">
-            <h3>Plan breakdown</h3>
-            <ul id="communityStats"></ul>
-          </div>
-          <div class="stat-card">
-            <h3>How to try it</h3>
-            <ol>
-              <li>Install backend requirements: <code>pip install flask</code></li>
-              <li>Seed and launch API: <code>python server.py</code></li>
-              <li>Open this page at <code>http://localhost:5000</code> to browse live data.</li>
-            </ol>
-            <p class="muted">All plan and user cards update directly from the SQLite database.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="perks" id="perks">
-        <header>
-          <p class="eyebrow">Why players switch</p>
-          <h2>Legendary perks across every tier</h2>
-        </header>
-        <div class="perk-grid">
-          <article>
-            <h3>Day-one titles</h3>
-            <p>
-              Experience new Xbox Game Studios releases the moment they drop. Ultimate players even
-              stream them from the cloud.
-            </p>
-          </article>
-          <article>
-            <h3>EA Play integration</h3>
-            <p>
-              Dive into the EA back catalog and unlock in-game rewards on PC and Ultimate plans.
-            </p>
-          </article>
-          <article>
-            <h3>Member rewards</h3>
-            <p>
-              Earn skins, in-game boosts, and store discounts just for staying subscribed. Rewards
-              scale with your plan level.
             </p>
           </article>
         </div>

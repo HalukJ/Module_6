@@ -231,6 +231,20 @@ class GamePassDatabase:
             for row in rows
         ]
 
+    def get_all_users(self) -> List[Dict]:
+        """Return minimal user rows for analytics and simulations."""
+        rows = self.conn.execute(
+            "SELECT id, plan, hours_per_month FROM users"
+        ).fetchall()
+        return [
+            {
+                "id": row["id"],
+                "plan": row["plan"],
+                "hours_per_month": row["hours_per_month"],
+            }
+            for row in rows
+        ]
+
     def subscribe_user(self, full_name: str, plan: str) -> Dict:
         if not full_name or not full_name.strip():
             raise ValueError("Name is required.")

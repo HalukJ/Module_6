@@ -22,7 +22,7 @@ def main():
     monthly.apply_monthly_changes()
 
     print()
-    print("Saved to:  monthly_changes.csv")
+    print("Saved to: monthly_changes.csv")
 
 if __name__ == "__main__":
     main()
